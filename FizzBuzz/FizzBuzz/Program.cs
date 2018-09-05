@@ -1,9 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Security;
-using System.Security.Cryptography;
 
 namespace FizzBuzz
 {
@@ -19,13 +15,13 @@ namespace FizzBuzz
             Description = description;
         }
 
-        public List<string> applyRule(List<string> list, int i)
+        public List<string> ApplyRule(List<string> list, int i)
         {
             if (!Condition(i))
             {
                 return list;
             }
-            List<string> result = new List<string>(list);
+            var result = new List<string>(list);
             return Operation(result, i);
 
         }
@@ -33,9 +29,49 @@ namespace FizzBuzz
         {
             List<string> NewApply(List<string> list, int i)
             {
-                return rule.applyRule(this.applyRule(list, i), i);
+                return rule.ApplyRule(ApplyRule(list, i), i);
             }
             return new Rule(NewApply, (i)=>true);
+        }
+
+        public static Rule UserRule(string conditionType, int conditionValue, string operationType, string operationValue)
+        {
+            return new Rule((list, k) =>
+                {
+                    switch (operationType[0])
+                    {
+                        case 'B':
+                            list.Insert(0, operationValue);
+                            return list;
+                        case 'E':
+                            list.Add(operationValue);
+                            return list;
+                        case 'R':
+                            list.Reverse();
+                            return list;
+                        default:
+                            Console.WriteLine("Operation not supported :(");
+                            return list;
+                    }
+                }, (k) =>
+                {
+                    switch (conditionType[0])
+                    {
+                        case '>':
+                            return k > conditionValue;
+                        case '<':
+                            return k < conditionValue;
+                        case '=':
+                            return k == conditionValue;
+                        case '%':
+                            return k % conditionValue == 0;
+                        default:
+                            Console.WriteLine("Condition not supported :(");
+                            return false;
+                    }
+                },
+                "If number " + conditionType[0].ToString() + " " + conditionValue + ", then " + operationType + " " + operationValue
+            );
         }
     }
     class Program
@@ -111,19 +147,82 @@ namespace FizzBuzz
                                 ReverseRule).FollowedBy(
                                 EmptyRule)))));
 
-        static string Valuation2(int i)
+        private static string Valuation2(int i)
         {
-            string output = "";
-            foreach (var s in Part2Rule.applyRule(new List<string>(), i))
+            var output = "";
+            foreach (var s in Part2Rule.ApplyRule(new List<string>(), i))
             {
                 output = output + s;
             }
             return output;
         }
 
-        static void Main(string[] args)
+        private static List<Rule> AddRule(List<Rule> rules)
         {
-            for (int i = 1; i <= 300; i++)
+            Console.WriteLine("Pick operation type(B - beginning insert, E - ending insert, R - reverse, O - original)");
+            var operationType = Console.ReadLine();
+            if (operationType != null && (!(operationType[0] == 'B' || operationType[0] == 'E' || operationType[0] == 'R' || operationType[0] == 'O')))
+            {
+                Console.WriteLine("Invalid operation type");
+                return rules;
+            }
+            if (operationType != null && operationType[0] == 'O')
+            {
+                Part2Rule.Description = "Original FizzBuzzBangBongFezz rules";
+                rules.Add(Part2Rule);
+                return rules;
+            }
+            string operationValue = "";
+            if (operationType != null && (operationType[0] == 'B' || operationType[0] == 'E'))
+            {
+                Console.WriteLine("Type phrase to insert");
+                operationValue = Console.ReadLine();
+            }
+
+            Console.WriteLine("Pick condition type(>, <, =, %):");
+            var conditionType = Console.ReadLine();
+            if (conditionType != null && !(conditionType[0] == '<' || conditionType[0] == '>' || conditionType[0] == '=' || conditionType[0] == '%'))
+            {
+                Console.WriteLine("Invalid condition type");
+                return rules;
+            }
+            Console.WriteLine("Type condition value(number on the right hand side):");
+            var conditionValue = int.Parse(Console.ReadLine() ?? throw new InvalidOperationException());
+
+            var rule = Rule.UserRule(conditionType, conditionValue, operationType, operationValue);
+            rules.Add(rule);
+            return rules;
+        }
+
+        private static List<Rule> AddRules(List<Rule> rules)
+        {
+            bool addingRules = true;
+            while (addingRules)
+            {
+                string rulesDescription = "";
+                foreach (var rule in rules)
+                {
+                    rulesDescription = rulesDescription + rule.Description + "\n";
+                }
+                Console.WriteLine("Current rules: " + rulesDescription);
+                Console.WriteLine("Do you want to add more rules? y/n");
+                string j = Console.ReadLine();
+                if (j == "n" || j == "N")
+                {
+                    addingRules = false;
+                }
+                else if (j == "y" || j == "Y")
+                {
+                    rules = AddRule(rules);
+                }
+            }
+
+            return rules;
+        }
+
+        public static void Main()
+        {
+            for (var i = 1; i <= 300; i++)
             {
                 Console.WriteLine(Valuation2(i));
             }
@@ -131,93 +230,17 @@ namespace FizzBuzz
             while (true)
             {
                 Console.WriteLine("What number do you want to evaluate?");
-                string i = Console.ReadLine();
+                var i = int.Parse(Console.ReadLine() ?? throw new InvalidOperationException());
+                rules = AddRules(rules);
 
-                bool addingRules = true;
-                while (addingRules)
-                {
-                    string rulesDescription = "";
-                    foreach (var rule in rules)
-                    {
-                        rulesDescription = rulesDescription + rule.Description + "\n";
-                    }
-                    Console.WriteLine("Current rules: " + rulesDescription);
-                    Console.WriteLine("Do you want to add more rules? y/n");
-                    string j = Console.ReadLine();
-                    if (j == "n" || j == "N")
-                    {
-                        addingRules = false;
-                    }else if (j == "y" || j == "Y")
-                    {
-                        Console.WriteLine("Pick condition type(>, <, =, %):");
-                        string conditionType = Console.ReadLine();
-                        Console.WriteLine("Type condition value(number on the right hand side):");
-                        int value = int.Parse(Console.ReadLine());
-                        Console.WriteLine("Pick operation type(B - beginning insert, E - ending insert, R - reverse)");
-                        string operationType = Console.ReadLine();
-                        string operationValue="";
-                        if (operationType[0] == 'B' || operationType[0] == 'E')
-                        {
-                            Console.WriteLine("Type phrase to insert");
-                            operationValue = Console.ReadLine();
-                        }
-
-                        bool validRule = true;
-                        Rule rule = new Rule((list, k) =>
-                        {
-
-                            switch (operationType[0])
-                            {
-                                case 'B':
-                                    list.Insert(0, operationValue);
-                                    return list;
-                                case 'E':
-                                    list.Add(operationValue);
-                                    return list;
-                                case 'R':
-                                    list.Reverse();
-                                    return list;
-                                default:
-                                    Console.WriteLine("Operation not supported :(");
-                                    validRule = false;
-                                    return list;
-                            }
-                        }, (k) =>
-                        {
-                            switch (conditionType[0])
-                            {
-                                case '>':
-                                    return k > value;
-                                case '<':
-                                    return k < value;
-                                case '=':
-                                    return k == value;
-                                case '%':
-                                    return k % value == 0;
-                                default:
-                                    Console.WriteLine("Condition not supported :(");
-                                    validRule = false; 
-                                    return false;
-                            }
-                        }, 
-                        "If number " + conditionType[0].ToString() + " " + value + ", then " + operationType + " " + operationValue
-                        );
-                        if (validRule)
-                        {
-                            rules.Add(rule);
-                        }
-                        
-                    }
-                }
-                
-                Rule finalRule = new Rule((list, k) => list, (k) => true);
+                var finalRule = new Rule((list, k) => list, (k) => true);
                 foreach (var rule in rules)
                 {
                     finalRule = finalRule.FollowedBy(rule);
                 }
-                
-                string output = "";
-                foreach (var s in finalRule.applyRule(new List<string>(), int.Parse(i)))
+
+                var output = "";
+                foreach (var s in finalRule.ApplyRule(new List<string>(), i))
                 {
                     output = output + s;
                 }
