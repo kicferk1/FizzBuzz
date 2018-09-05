@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace FizzBuzz
@@ -147,7 +148,7 @@ namespace FizzBuzz
                                 ReverseRule).FollowedBy(
                                 EmptyRule)))));
 
-        private static string Valuation2(int i)
+        public static string Valuation2(int i)
         {
             var output = "";
             foreach (var s in Part2Rule.ApplyRule(new List<string>(), i))
@@ -222,13 +223,18 @@ namespace FizzBuzz
 
         public static void Main()
         {
-            for (var i = 1; i <= 300; i++)
-            {
-                Console.WriteLine(Valuation2(i));
-            }
+            
             var rules = new List<Rule>();
             while (true)
             {
+                var fizzBuzzer = new MyClass();
+
+                foreach (var value in fizzBuzzer)
+                {
+                    Console.WriteLine(value);
+                }
+
+
                 Console.WriteLine("What number do you want to evaluate?");
                 var i = int.Parse(Console.ReadLine() ?? throw new InvalidOperationException());
                 rules = AddRules(rules);
@@ -248,4 +254,63 @@ namespace FizzBuzz
             }
         }
     }
+
+    public class MyClass : IEnumerable
+    {
+        public MyClass()
+        {
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return (IEnumerator)GetEnumerator();
+        }
+
+        public PeopleEnum GetEnumerator()
+        {
+            return new PeopleEnum();
+        }
+    }
+
+    public class PeopleEnum : IEnumerator
+    {
+        private int current = 10;
+        private int final = 100;
+
+        // Enumerators are positioned before the first element
+        // until the first MoveNext() call.
+
+        public PeopleEnum()
+        {
+        }
+
+        public bool MoveNext()
+        {
+            current++;
+            return (current < final);
+        }
+
+        public void Reset()
+        {
+            current = 10;
+        }
+
+        object IEnumerator.Current
+        {
+            get
+            {
+                return Program.Valuation2(current);
+            }
+        }
+
+        public string Current
+        {
+            get
+            {
+                    return Program.Valuation2(current);
+              
+            }
+        }
+    }
+
 }
