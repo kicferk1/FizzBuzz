@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security;
 using System.Security.Cryptography;
 
@@ -8,109 +9,100 @@ namespace FizzBuzz
 {
     public class Rule
     {
-        public Func<List<string>, int, List<string>> apply;
-        public Rule(Func<List<string>, int, List<string>> newApply)
+        Func<List<string>, int, List<string>> Operation;
+        private Func<int, bool> Condition;
+        public string Description()
         {
-            apply = newApply;
+            return "todo";
+        }
+        public Rule(Func<List<string>, int, List<string>> newOperation, Func<int, bool> newCondition)
+        {
+            Operation = newOperation;
+            Condition = newCondition;
         }
 
+        public List<string> applyRule(List<string> list, int i)
+        {
+            if (!Condition(i))
+            {
+                return list;
+            }
+            List<string> result = new List<string>(list);
+            return Operation(result, i);
+
+        }
         public Rule FollowedBy(Rule rule)
         {
             List<string> NewApply(List<string> list, int i)
             {
-                return rule.apply(this.apply(list, i), i);
+                return rule.applyRule(this.applyRule(list, i), i);
             }
-            return new Rule(NewApply);
+            return new Rule(NewApply, (i)=>true);
         }
     }
     class Program
     {
-        static List<string> FizzFunction(List<string> list, int i)
-        {
-            List<string> result = new List<string>(list);
-            if (i % 3 == 0)
-            {
-                result.Add("Fizz");
-            }
-            return result;
-        }
-        static Rule FizzRule = new Rule(FizzFunction);
+        static Rule FizzRule = new Rule(
+            (list, i) => {
+                list.Add("Fizz");
+                return list;
+            },
+            (i) => i % 3 == 0
+        );
 
-        static List<string> BuzzFunction(List<string> list, int i)
-        {
-            List<string> result = new List<string>(list);
-            if (i % 5 == 0)
-            {
-                result.Add("Buzz");
-            }
-            return result;
-        }
-        static Rule BuzzRule = new Rule(BuzzFunction);
+        static Rule BuzzRule = new Rule(
+            (list, i) => {
+                list.Add("Buzz");
+                return list;
+            },
+            (i) => i % 5 == 0);
 
-        static List<string> BangFunction(List<string> list, int i)
-        {
-            List<string> result = new List<string>(list);
-            if (i % 7 == 0)
-            {
-                result.Add("Bang");
-            }
-            return result;
-        }
-        static Rule BangRule = new Rule(BangFunction);
+        static Rule BangRule = new Rule(
+            (list, i) => {
+                list.Add("Bang");
+                return list;
+            },
+            (i) => i % 7 == 0);
 
-        static List<string> BongFunction(List<string> list, int i)
-        {
-            List<string> result = new List<string>(list);
-            if (i % 11 == 0)
-            {
-                result.Clear();
-                result.Add("Bong");
-            }
-            return result;
-        }
-        static Rule BongRule = new Rule(BongFunction);
+        static Rule BongRule = new Rule(
+            (list, i) => {
+                list.Clear();
+                list.Add("Bong");
+                return list;
+            },
+            (i) => i % 11 == 0);
 
-        static List<string> FezzFunction(List<string> list, int i)
-        {
-            List<string> result = new List<string>(list);
-            if (i % 13 == 0)
-            {
+        static Rule FezzRule = new Rule(
+            (list, i) => {
                 bool inserted = false;
-                for (int j = 0; j < result.Count && !inserted; j++)
+                for (int j = 0; j < list.Count && !inserted; j++)
                 {
-                    if (result[j][0] == 'B')
+                    if (list[j][0] == 'B')
                     {
-                        result.Insert(j, "Fezz");
+                        list.Insert(j, "Fezz");
                         inserted = true;
                     }
                 }
-                if (!inserted) { result.Add("Fezz"); }
-            }
-            return result;
-        }
-        static Rule FezzRule = new Rule(FezzFunction);
+                if (!inserted) { list.Add("Fezz"); }
+                return list;
+            }, (i) => i % 13 == 0);
 
-        static List<string> ReverseFunction(List<string> list, int i)
-        {
-            List<string> result = new List<string>(list);
-            if (i % 17 == 0)
+        private static Rule ReverseRule = new Rule(
+            (list, i) =>
             {
-                result.Reverse();
-            }
-            return result;
-        }
-        static Rule ReverseRule = new Rule(ReverseFunction);
+                list.Reverse();
+                return list;
+            }, (i) => i % 17 == 0);
 
-        static List<string> EmptyFunction(List<string> list, int i)
-        {
-            List<string> result = new List<string>(list);
-            if (result.Count==0)
+        static Rule EmptyRule = new Rule(
+            (list, i) =>
             {
-                result.Add(i.ToString());
-            }
-            return result;
-        }
-        static Rule EmptyRule = new Rule(EmptyFunction);
+                if (list.Count == 0)
+                {
+                    list.Add(i.ToString());
+                }
+                return list;
+            }, (i) => true);
 
         static private Rule Part2Rule = 
             FizzRule.FollowedBy(
@@ -123,70 +115,10 @@ namespace FizzBuzz
 
         static string Valuation2(int i)
         {
-            var result = new List<string>();
-
-            if (i % 3 == 0)
-            {
-                result.Add("Fizz");
-            }
-
-            if (i % 5 == 0)
-            {
-                result.Add("Buzz");
-            }
-
-            if (i % 7 == 0)
-            {
-                result.Add("Bang");
-            }
-
-            if (i % 11 == 0)
-            {
-                result.Clear();
-                result.Add("Bong");
-            }
-
-            if (i % 13 == 0)
-            {
-                bool inserted = false;
-                for (int j = 0; j < result.Count && !inserted; j++)
-                {
-                    if (result[j][0] == 'B')
-                    {
-                        result.Insert(j, "Fezz");
-                        inserted = true;
-                    }
-                }
-                if (!inserted) { result.Add("Fezz"); }
-            }
-
-            if (i % 17 == 0)
-            {
-                result.Reverse();
-            }
-
-
-
-            if (result.Count == 0)
-            {
-                result.Add(i.ToString());
-            }
-
             string output = "";
-            foreach (var s in result)
+            foreach (var s in Part2Rule.applyRule(new List<string>(), i))
             {
                 output = output + s;
-            }
-
-            string output2 = "";
-            foreach (var s in Part2Rule.apply(new List<string>(), i))
-            {
-                output2 = output2 + s;
-            }
-
-            if (output2 != output)
-            {
-                return "ERROR, " + i + " " + output + " " + output2;
             }
             return output;
         }
